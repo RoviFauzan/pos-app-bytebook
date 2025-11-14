@@ -1,4 +1,4 @@
 <?php
-// Forward to login controller by default
-header("Location: controller/Controller.php?u=login");
+// Forward to static login page for non-PHP hosting (e.g., Vercel/GitHub Pages)
+header("Location: view/login.html");
 exit;

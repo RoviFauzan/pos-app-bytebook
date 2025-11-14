@@ -276,3 +276,13 @@ Keamanan:
 Migrasi penuh:
 - Port fungsi tambah transaksi ke Next.js API (POST /api/transaksi).
 - Gunakan Row Level Security + Policies di Supabase untuk membatasi akses.
+
+## Routing pada Hosting Static (GitHub/Vercel)
+- Hosting static tidak menjalankan PHP, sehingga akses ke Controller.php akan mengunduh file.
+- Gunakan entry point: /index.html (di App) yang mengarahkan ke /view/login.html.
+- Jangan arahkan ke Controller.php pada environment static.
+- Untuk hosting PHP (Apache/cPanel/Hostinger), akses lewat controller/Controller.php?u=login.
+
+## Ringkasan
+- Static mode: buka /view/login.html untuk login dan dashboard ringan.
+- PHP mode: semua fitur (transaksi, cetak nota) berjalan via Controller.php.
