@@ -282,5 +282,10 @@ else if(isset($_GET['chart_data'])) {
     }
     exit;
 }
+else {
+    // Default route: redirect to login
+    header("Location: Controller.php?u=login");
+    exit;
+}
 ?>
 
