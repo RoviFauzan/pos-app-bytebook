@@ -8,14 +8,21 @@ error_reporting(E_ALL);
 // Use PDO from Database.php
 require_once __DIR__ . "/Database.php";
 
+function ensureDb() {
+    $conn = db();
+    if (!$conn) {
+        die("<script>alert('Koneksi database tidak tersedia (Supabase PDO).');window.location='Controller.php?u=login';</script>");
+    }
+    return $conn;
+}
+
 // ==============================================
 //              Kontrol Database
 // ==============================================
 
 // Fungsi Login Admin (PDO)
 function LoginAdmin($username, $password) {
-    $pdo = db();
-    if(!$pdo){ echo "<script>alert('DB tidak tersedia');window.location='Controller.php?u=login';</script>"; return; }
+    $pdo = ensureDb();
 
     $stmt = $pdo->prepare("SELECT a.*, r.nama_role 
                            FROM admin a 
@@ -62,7 +69,7 @@ function canViewTransactionData() { return isOwner() || isAdmin(); }
 
 // Fungsi Ubah Akun Admin (PDO)
 function ubahAkunAdmin($id_admin, $old_password, $username, $password, $nama_admin){
-    $pdo = db();
+    $pdo = ensureDb();
 
     $stmt = $pdo->prepare("SELECT password FROM admin WHERE id_admin = :id");
     $stmt->execute([':id' => $id_admin]);
@@ -119,7 +126,7 @@ function Logout(){
 // Admin Functions (PDO)
 // =========================
 function tambahAdmin($username, $password, $nama_admin, $id_role = 2) {
-    $pdo = db();
+    $pdo = ensureDb();
 
     $check = $pdo->prepare("SELECT 1 FROM admin WHERE username = :u LIMIT 1");
     $check->execute([':u' => $username]);
@@ -138,7 +145,7 @@ function tambahAdmin($username, $password, $nama_admin, $id_role = 2) {
 }
 
 function editAdmin($id_admin, $username, $password, $nama_admin, $id_role) {
-    $pdo = db();
+    $pdo = ensureDb();
 
     $check = $pdo->prepare("SELECT 1 FROM admin WHERE username = :u AND id_admin != :id LIMIT 1");
     $check->execute([':u' => $username, ':id' => $id_admin]);
@@ -160,7 +167,7 @@ function editAdmin($id_admin, $username, $password, $nama_admin, $id_role) {
 }
 
 function hapusAdmin($id_admin) {
-    $pdo = db();
+    $pdo = ensureDb();
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
     $count = (int)$pdo->query("SELECT COUNT(*) AS total FROM admin")->fetch()['total'];
@@ -183,7 +190,7 @@ function hapusAdmin($id_admin) {
 }
 
 function getDataAdmin() {
-    $pdo = db(); if(!$pdo) return [];
+    $pdo = ensureDb();
     $stmt = $pdo->query("SELECT a.*, r.nama_role FROM admin a JOIN role r ON a.id_role = r.id_role ORDER BY a.id_admin");
     return $stmt->fetchAll();
 }
@@ -192,7 +199,7 @@ function getDataAdmin() {
 // Barang Functions (PDO)
 // =========================
 function tambahBarang($nama_barang, $merk, $harga_beli, $harga_jual, $stok){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("INSERT INTO barang (nama_barang, merk, harga_beli, harga_jual, stok) VALUES (:n,:m,:hb,:hj,:s)");
     $stmt->execute([':n'=>$nama_barang, ':m'=>$merk, ':hb'=>$harga_beli, ':hj'=>$harga_jual, ':s'=>$stok]);
     echo "<script>window.location='$_SERVER[PHP_SELF]?u=data-barang';</script>";
@@ -200,13 +207,13 @@ function tambahBarang($nama_barang, $merk, $harga_beli, $harga_jual, $stok){
 }
 
 function getDataBarang(){
-    $pdo = db(); if(!$pdo) return [];
+    $pdo = ensureDb();
     $stmt = $pdo->query("SELECT * FROM barang");
     return $stmt->fetchAll();
 }
 
 function editBarang($conn_unused, $id_barang, $nama_barang, $harga_beli, $harga_jual, $stok, $merk) {
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("UPDATE barang SET nama_barang=:n, harga_beli=:hb, harga_jual=:hj, stok=:s, merk=:m WHERE id_barang=:id");
     $ok = $stmt->execute([':n'=>$nama_barang, ':hb'=>$harga_beli, ':hj'=>$harga_jual, ':s'=>$stok, ':m'=>$merk, ':id'=>$id_barang]);
     echo "<script>alert('".($ok?'Data barang berhasil diupdate':'Gagal mengupdate data barang')."');window.location='$_SERVER[PHP_SELF]?u=data-barang';</script>";
@@ -214,7 +221,7 @@ function editBarang($conn_unused, $id_barang, $nama_barang, $harga_beli, $harga_
 }
 
 function hapusBarang($id_barang){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("DELETE FROM barang WHERE id_barang=:id");
     $stmt->execute([':id'=>$id_barang]);
     echo "<script>window.location='$_SERVER[PHP_SELF]?u=data-barang';</script>";
@@ -222,7 +229,7 @@ function hapusBarang($id_barang){
 }
 
 function countRowsBarang(){
-    $pdo = db();
+    $pdo = ensureDb();
     return (int)$pdo->query("SELECT COUNT(*) AS total_rows FROM barang")->fetch()['total_rows'];
 }
 
@@ -230,7 +237,7 @@ function countRowsBarang(){
 // Pelanggan Functions (PDO)
 // =========================
 function tambahPelanggan($nama_pelanggan, $no_hp, $alamat, $email){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("INSERT INTO pelanggan (nama_pelanggan, no_hp, alamat, email) VALUES (:n,:hp,:al,:em)");
     $stmt->execute([':n'=>$nama_pelanggan, ':hp'=>$no_hp, ':al'=>$alamat, ':em'=>$email]);
     echo "<script>window.location='$_SERVER[PHP_SELF]?u=data-pelanggan';</script>";
@@ -238,13 +245,13 @@ function tambahPelanggan($nama_pelanggan, $no_hp, $alamat, $email){
 }
 
 function getDataPelanggan(){
-    $pdo = db(); if(!$pdo) return [];
+    $pdo = ensureDb();
     $stmt = $pdo->query("SELECT * FROM pelanggan");
     return $stmt->fetchAll();
 }
 
 function editPelanggan($conn_unused, $id_pelanggan, $nama_pelanggan, $no_hp, $alamat, $email){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("UPDATE pelanggan SET nama_pelanggan=:n, no_hp=:hp, alamat=:al, email=:em WHERE id_pelanggan=:id");
     $ok = $stmt->execute([':n'=>$nama_pelanggan, ':hp'=>$no_hp, ':al'=>$alamat, ':em'=>$email, ':id'=>$id_pelanggan]);
     echo "<script>alert('".($ok?'Data pelanggan berhasil diupdate':'Gagal mengupdate data pelanggan')."');window.location='$_SERVER[PHP_SELF]?u=data-pelanggan';</script>";
@@ -252,7 +259,7 @@ function editPelanggan($conn_unused, $id_pelanggan, $nama_pelanggan, $no_hp, $al
 }
 
 function hapusPelanggan($id_pelanggan){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("DELETE FROM pelanggan WHERE id_pelanggan=:id");
     $stmt->execute([':id'=>$id_pelanggan]);
     echo "<script>window.location='$_SERVER[PHP_SELF]?u=data-pelanggan';</script>";
@@ -260,7 +267,7 @@ function hapusPelanggan($id_pelanggan){
 }
 
 function countRowsPelanggan(){
-    $pdo = db();
+    $pdo = ensureDb();
     return (int)$pdo->query("SELECT COUNT(*) AS total_rows FROM pelanggan")->fetch()['total_rows'];
 }
 
@@ -268,13 +275,13 @@ function countRowsPelanggan(){
 // Transaksi (PDO)
 // =========================
 function getDataTransaksi(){
-    $pdo = db(); if(!$pdo) return [];
+    $pdo = ensureDb();
     $stmt = $pdo->query("SELECT * FROM transaksi");
     return $stmt->fetchAll();
 }
 
 function editTransaksi($id_transaksi, $tanggal, $total_pembelian, $kembalian, $bayar, $keterangan){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("UPDATE transaksi 
                            SET tanggal=:t, total_pembelian=:tp, kembalian=:k, bayar=:b, keterangan=:ket 
                            WHERE id_transaksi=:id");
@@ -284,7 +291,7 @@ function editTransaksi($id_transaksi, $tanggal, $total_pembelian, $kembalian, $b
 }
 
 function hapusTransaksi($id_transaksi){
-    $pdo = db();
+    $pdo = ensureDb();
     $pdo->beginTransaction();
     try {
         $d = $pdo->prepare("DELETE FROM detail_transaksi WHERE id_transaksi=:id");
@@ -301,12 +308,12 @@ function hapusTransaksi($id_transaksi){
 }
 
 function hitungOmsetPenjualan(){
-    $pdo = db();
+    $pdo = ensureDb();
     return (float)($pdo->query("SELECT COALESCE(SUM(total_pembelian),0) AS omset FROM transaksi")->fetch()['omset'] ?? 0);
 }
 
 function hitungPendapatanBersih(){
-    $pdo = db();
+    $pdo = ensureDb();
     $sqlJual = "SELECT COALESCE(SUM(b.harga_jual * dt.qty),0) AS total_harga_jual
                 FROM detail_transaksi dt INNER JOIN barang b ON dt.id_barang = b.id_barang";
     $sqlBeli = "SELECT COALESCE(SUM(b.harga_beli * dt.qty),0) AS total_harga_beli
@@ -317,7 +324,7 @@ function hitungPendapatanBersih(){
 }
 
 function getDetailTransaksiByTransaksiId($id_transaksi){
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("SELECT dt.id_detail_transaksi, dt.id_barang, b.nama_barang, dt.qty, b.harga_jual, (dt.qty * b.harga_jual) AS total
                            FROM detail_transaksi dt 
                            INNER JOIN barang b ON dt.id_barang = b.id_barang
@@ -328,7 +335,7 @@ function getDetailTransaksiByTransaksiId($id_transaksi){
 
 // fungsi cetak nota
 function cetakNota($id_transaksi) {
-    $pdo = db();
+    $pdo = ensureDb();
     try {
         $id_transaksi = max(1, intval($id_transaksi));
         $t = $pdo->prepare("SELECT t.*, p.nama_pelanggan, p.alamat, p.no_hp 
@@ -356,7 +363,7 @@ function cetakNota($id_transaksi) {
 }
 
 function getRecentTransactions($limit = 3) {
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("SELECT t.*, p.nama_pelanggan 
                            FROM transaksi t
                            INNER JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan 
@@ -368,7 +375,7 @@ function getRecentTransactions($limit = 3) {
 }
 
 function getMonthlySalesData($year = null) {
-    $pdo = db();
+    $pdo = ensureDb();
     if ($year === null) $year = date('Y');
     $salesData = array_fill(0, 12, 0.0);
 
@@ -388,12 +395,12 @@ function getMonthlySalesData($year = null) {
 }
 
 function countTransactions() {
-    $pdo = db();
+    $pdo = ensureDb();
     return (int)$pdo->query("SELECT COUNT(*) AS total FROM transaksi")->fetch()['total'];
 }
 
 function getCategoryData() {
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->query("SELECT merk, COUNT(*) as jumlah FROM barang GROUP BY merk ORDER BY jumlah DESC");
     $categories = [];
     $counts = [];
@@ -405,7 +412,7 @@ function getCategoryData() {
 }
 
 function getMonthlyChartData() {
-    $pdo = db();
+    $pdo = ensureDb();
     $year = date('Y');
     $salesData = array_fill(1, 12, 0.0);
 
@@ -422,7 +429,7 @@ function getMonthlyChartData() {
 }
 
 function ubahNamaAdmin($id_admin, $nama_admin) {
-    $pdo = db();
+    $pdo = ensureDb();
     $stmt = $pdo->prepare("UPDATE admin SET nama_admin=:n WHERE id_admin=:id");
     $stmt->execute([':n'=>$nama_admin, ':id'=>$id_admin]);
 
@@ -435,7 +442,7 @@ function ubahNamaAdmin($id_admin, $nama_admin) {
 
 // Get Product Distribution Data for Chart
 function getProductDistributionData($viewType = 'count') {
-    $pdo = db();
+    $pdo = ensureDb();
 
     $result = [
         'labels' => [],

@@ -224,18 +224,6 @@ Jika memilih refactor penuh ke Next.js + supabase-js, buat checklist baru sebelu
 - Gunakan file: assets/js/supabase-client.js untuk akses data melalui REST API Supabase.
 - Query lama PHP masih berjalan lokal jika Anda aktifkan kembali koneksi, tetapi akan dihapus setelah refactor penuh.
 
-# Kasir App – Hybrid Supabase (PHP + JS)
-
-## Mode Hybrid
-- Backend PHP tetap aktif (login, transaksi) memakai PDO ke Supabase.
-- Listing data (barang, pelanggan, admin, transaksi, dashboard) dipindah ke front-end dengan assets/js/supabase-client.js.
-- Jika ingin full JS, ganti form submit transaksi & login ke Supabase auth lalu hapus Controller.php.
-
-## Penyesuaian Terbaru
-- Mengembalikan koneksi PDO di controller/Database.php agar fungsi lama tidak error.
-- Menambah guard null pada Function.php.
-- View utama kini menggunakan fetch JS untuk data tabel.
-
 ## Supabase JS Client (REST)
 Contoh berada di: assets/js/supabase-client.js
 
@@ -257,3 +245,14 @@ Pastikan table exposed (Row Level Security diatur) atau gunakan service role di 
 2. Buat pengganti di JS memakai supabase.fetch('nama_tabel?select=*').
 3. Ganti loop PHP di view menjadi render JS (innerHTML).
 4. Setelah semua selesai, hapus Function.php dan Controller.php.
+
+## Mode Hybrid
+Saat ini aplikasi berjalan dengan:
+- Backend PHP (PDO Supabase Postgres) aktif kembali (Database.php)
+- Opsional front-end Supabase REST via assets/js/supabase-client.js
+Gunakan JS client untuk eksperimen tanpa mematikan fungsi PHP existing.
+
+## Catatan Error “Merah”
+Jika sebelumnya muncul error merah pada IDE:
+- Penyebab: Database.php mengembalikan null sehingga db()->query() gagal.
+- Solusi: Database.php kini memuat koneksi PDO lagi + guard ensureDb() di Function.php.

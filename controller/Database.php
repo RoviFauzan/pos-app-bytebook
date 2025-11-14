@@ -1,5 +1,8 @@
 <?php
-$host   = getenv('SUPABASE_DB_HOST') ?: 'YOUR-PROJECT.supabase.co';
+// Supabase Postgres connection via PDO (active)
+// Uses environment variables:
+// SUPABASE_DB_HOST, SUPABASE_DB_PORT, SUPABASE_DB_NAME, SUPABASE_DB_USER, SUPABASE_DB_PASSWORD, SUPABASE_DB_SSLMODE
+$host   = getenv('SUPABASE_DB_HOST') ?: 'YOUR-PROJECT-HOST.supabase.co';
 $dbname = getenv('SUPABASE_DB_NAME') ?: 'postgres';
 $user   = getenv('SUPABASE_DB_USER') ?: 'postgres';
 $pass   = getenv('SUPABASE_DB_PASSWORD') ?: '';
@@ -15,11 +18,10 @@ try {
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 } catch (PDOException $e) {
-    die("Koneksi DB gagal: " . $e->getMessage());
+    trigger_error("DB connection failed: " . $e->getMessage(), E_USER_ERROR);
 }
 
 function db(): ?PDO {
-    global $pdo;
-    return $pdo;
+    return isset($pdo) ? $pdo : null;
 }
 ?>

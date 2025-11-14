@@ -61,8 +61,7 @@ else if(isset($_POST['edit-barang'])){
     editBarang(null, $id_barang, $nama_barang, $harga_beli, $harga_jual, $stok, $merk);
 } 
 else if(isset($_POST['tambah-transaksi'])) {
-    // Re-implement using PDO transaction
-    $pdo = db();
+    $pdo = ensureDb();
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
     try {
@@ -249,8 +248,8 @@ if(isset($_GET['u'])){
     }
     else if($url == "export-transaksi"){
         SessionCheck();
+        $pdo = ensureDb();
         // Fetch with PDO, keep ExportHelper the same
-        $pdo = db();
         $stmt = $pdo->query("SELECT t.*, p.nama_pelanggan 
                              FROM transaksi t 
                              JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan 
