@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="../assets/images/favicon.png" />
+    <script type="module" src="../assets/js/supabase-client.js"></script>
   </head>
   <body>
     <div class="container-scroller">
@@ -79,71 +80,7 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <?php
-                                $dataTransaksi = getDataTransaksi(); // Fungsi untuk mengambil data transaksi dari database
-                                foreach ($dataTransaksi as $transaksi) {
-                                ?>
-                                    <tr>
-                                        <td><?php echo $transaksi['id_transaksi']; ?></td>
-                                        <td><?php echo $transaksi['tanggal']; ?></td>
-                                        <td><?php echo $transaksi['total_pembelian']; ?></td>
-                                        <td><?php echo $transaksi['kembalian']; ?></td>
-                                        <td><?php echo $transaksi['bayar']; ?></td>
-                                        <td>
-                                            <a href="#" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#detail-Transaksi-<?php echo $transaksi['id_transaksi']; ?>"><i class="mdi mdi-eye"></i></a>
-                                            <a href="Controller.php?u=del-data-transaksi&id=<?php echo $transaksi['id_transaksi']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin akan menghapus data ini?');"><i class="mdi mdi-delete"></i></a>
-
-                                            <!-- Modal Detail Transaksi -->
-                                            <div class="modal fade" id="detail-Transaksi-<?php echo $transaksi['id_transaksi']; ?>" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detailTransaksiLabel-<?php echo $transaksi['id_transaksi']; ?>" aria-hidden="true">
-                                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="detailTransaksiLabel-<?php echo $transaksi['id_transaksi']; ?>">Detail Transaksi #<?php echo $transaksi['id_transaksi']; ?></h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p>Tanggal Pembelian: <?php echo $transaksi['tanggal']; ?></p>
-                                                            <table class="table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>#ID Barang</th>
-                                                                        <th>Nama Barang</th>
-                                                                        <th>Qty</th>
-                                                                        <th>Harga Jual</th>
-                                                                        <th>Total</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php
-                                                                    $detailTransaksi = getDetailTransaksiByTransaksiId($transaksi['id_transaksi']);
-                                                                    foreach ($detailTransaksi as $detail) {
-                                                                    ?>
-                                                                        <tr>
-                                                                            <td><?php echo $detail['id_barang']; ?></td>
-                                                                            <td><?php echo $detail['nama_barang']; ?></td>
-                                                                            <td><?php echo $detail['qty']; ?></td>
-                                                                            <td><?php echo $detail['harga_jual']; ?></td>
-                                                                            <td><?php echo $detail['total']; ?></td>
-                                                                        </tr>
-                                                                    <?php } ?>
-                                                                </tbody>
-                                                            </table>
-                                                            <p>Pembayaran: <b>Rp  <?php echo number_format($transaksi['bayar']); ?></b></p>
-                                                            <p>Kembalian: <b>Rp <?php echo number_format($transaksi['kembalian']); ?></b></p>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                                            <a href="Controller.php?u=print-nota&id=<?php echo $transaksi['id_transaksi']; ?>" class="btn btn-primary">Print Nota</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <!-- End Modal Detail Transaksi -->
-                                        </td>
-                                    </tr>
-                                <?php } ?>
-                            </tbody>
+                            <tbody id="transaksi-body"></tbody>
                         </table>
                     </div>
 
@@ -178,26 +115,23 @@
     <script src="../assets/js/todolist.js"></script>
     <script src="../assets/js/jquery.cookie.js"></script>
     <script type="module">
-            import {DataTable} from "../assets/vendors/simple-datatables/module.js"
-            window.dt = new DataTable("#demo-table", {
-                perPageSelect: [5, 10, 15, ["All", -1]],
-                columns: [
-                    {
-                        select: 2,
-                        sortSequence: ["desc", "asc"]
-                    },
-                    {
-                        select: 3,
-                        sortSequence: ["desc"]
-                    },
-                    {
-                        select: 4,
-                        cellClass: "green",
-                        headerClass: "red"
-                    }
-                ]
-            })
-        </script>
+      import api from '../assets/js/supabase-client.js';
+      const body = document.getElementById('transaksi-body');
+      (async ()=>{
+        const data = await api.list('transaksi');
+        body.innerHTML = data.map(t=>`<tr>
+          <td>${t.id_transaksi}</td>
+          <td>${t.tanggal}</td>
+            <td>${api.rupiah(t.total_pembelian)}</td>
+            <td>${api.rupiah(t.kembalian)}</td>
+            <td>${api.rupiah(t.bayar)}</td>
+            <td>
+              <a href="Controller.php?u=print-nota&id=${t.id_transaksi}" class="btn btn-info btn-sm"><i class="mdi mdi-eye"></i></a>
+              <a href="Controller.php?u=del-data-transaksi&id=${t.id_transaksi}" class="btn btn-danger btn-sm" onclick="return confirm('Hapus?')"><i class="mdi mdi-delete"></i></a>
+            </td>
+        </tr>`).join('');
+      })().catch(e=>body.innerHTML=`<tr><td colspan="6">Error: ${e.message}</td></tr>`);
+    </script>
     <!-- endinject -->
     <!-- Custom js for this page -->
     <!-- <script src="../assets/js/dashboard.js"></script> -->

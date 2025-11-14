@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="../assets/images/favicon.png" />
+    <script type="module" src="../assets/js/supabase-client.js"></script>
   </head>
   <body>
     <div class="container-scroller">
@@ -85,66 +86,7 @@
                                 <?php } ?>
                             </tr>
                         </thead>
-                        <tbody>
-                        <?php
-                            $dataPelanggan = getDataPelanggan();
-                            foreach ($dataPelanggan as $pelanggan) {
-                            ?>
-                                <tr>
-                                    <td><?php echo $pelanggan['id_pelanggan']; ?></td>
-                                    <td><?php echo $pelanggan['nama_pelanggan']; ?></td>
-                                    <td><?php echo $pelanggan['no_hp']; ?></td>
-                                    <td><?php echo $pelanggan['alamat']; ?></td>
-                                    <td><?php echo $pelanggan['email']; ?></td>
-                                    <?php if (!isKasir() && !isOwner()) { ?>
-                                    <td>
-                                        <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-Pelanggan-<?php echo $pelanggan['id_pelanggan']; ?>"><i class="mdi mdi-pencil"></i></a>
-                                        <a href="Controller.php?u=del-data-pelanggan&id=<?php echo $pelanggan['id_pelanggan']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin akan menghapus data ini?');"><i class="mdi mdi-delete"></i></a>
-
-<!-- Modal Edit Pelanggan -->
-<div class="modal fade" id="edit-Pelanggan-<?php echo $pelanggan['id_pelanggan']; ?>" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editPelangganLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editPelangganLabel">Edit Data Pelanggan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="Controller.php" method="post">
-                    <input type="hidden" name="id_pelanggan" value="<?php echo $pelanggan['id_pelanggan']; ?>">
-                    <div class="mb-3">
-                        <label for="nama_pelanggan" class="form-label">Nama Pelanggan</label>
-                        <input type="text" class="form-control" name="nama_pelanggan" value="<?php echo $pelanggan['nama_pelanggan']; ?>" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="no_hp" class="form-label">No HP</label>
-                        <input type="text" class="form-control" name="no_hp" value="<?php echo $pelanggan['no_hp']; ?>" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="alamat" class="form-label">Alamat</label>
-                        <input type="text" class="form-control" name="alamat" value="<?php echo $pelanggan['alamat']; ?>" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="text" class="form-control" name="email" value="<?php echo $pelanggan['email']; ?>" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batalkan</button>
-                    <button type="submit" class="btn btn-primary" name="edit-pelanggan">Simpan</button>
-                </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End Modal Edit Pelanggan -->
-
-                                    </td>
-                                    <?php } ?>
-                                </tr>
-                            <?php } ?>
-                        </tbody>
+                        <tbody id="pelanggan-body"></tbody>
                     </table>
 
                 </div>
@@ -177,26 +119,24 @@
     <script src="../assets/js/todolist.js"></script>
     <script src="../assets/js/jquery.cookie.js"></script>
     <script type="module">
-            import {DataTable} from "../assets/vendors/simple-datatables/module.js"
-            window.dt = new DataTable("#demo-table", {
-                perPageSelect: [5, 10, 15, ["All", -1]],
-                columns: [
-                    {
-                        select: 2,
-                        sortSequence: ["desc", "asc"]
-                    },
-                    {
-                        select: 3,
-                        sortSequence: ["desc"]
-                    },
-                    {
-                        select: 4,
-                        cellClass: "green",
-                        headerClass: "red"
-                    }
-                ]
-            })
-        </script>
+      import api from '../assets/js/supabase-client.js';
+      const body = document.getElementById('pelanggan-body');
+      (async ()=>{
+        const data = await api.list('pelanggan');
+        body.innerHTML = data.map(p=>`<tr>
+          <td>${p.id_pelanggan}</td>
+          <td>${p.nama_pelanggan}</td>
+          <td>${p.no_hp}</td>
+          <td>${p.alamat}</td>
+          <td>${p.email}</td>
+          <td>
+            <button class="btn btn-primary btn-sm" onclick="editP(${p.id_pelanggan})"><i class="mdi mdi-pencil"></i></button>
+            <a href="Controller.php?u=del-data-pelanggan&id=${p.id_pelanggan}" class="btn btn-danger btn-sm" onclick="return confirm('Hapus?')"><i class="mdi mdi-delete"></i></a>
+          </td>
+        </tr>`).join('');
+      })().catch(e=>body.innerHTML=`<tr><td colspan="6">Error: ${e.message}</td></tr>`);
+      window.editP = id => alert('Gunakan form PHP edit (belum dipindah). ID: '+id);
+    </script>
     <!-- endinject -->
     <!-- Custom js for this page -->
     <!-- <script src="../assets/js/dashboard.js"></script> -->

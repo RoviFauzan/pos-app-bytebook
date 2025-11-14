@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="../assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="../assets/images/favicon.png" />
+    <script type="module" src="../assets/js/supabase-client.js"></script>
   </head>
   <body>
     <div class="container-scroller">
@@ -51,7 +52,7 @@
                     <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
                     <h4 class="font-weight-normal mb-3">Total Penjualan <i class="mdi mdi-chart-line mdi-24px float-end"></i>
                     </h4>
-                    <h2 class="mb-5"><?= "Rp. " . number_format(hitungOmsetPenjualan() ?: 0);?></h2>
+                    <h2 class="mb-5"><span id="omset-label">Rp. 0</span></h2>
                     <h6 class="card-text">Omset keseluruhan</h6>
                   </div>
                 </div>
@@ -62,7 +63,7 @@
                     <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
                     <h4 class="font-weight-normal mb-3">Pelanggan <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i>
                     </h4>
-                    <h2 class="mb-5"><?= countRowsPelanggan();?></h2>
+                    <h2 class="mb-5"><span id="pelanggan-count">0</span></h2>
                     <h6 class="card-text">Jumlah pelanggan terdaftar</h6>
                   </div>
                 </div>
@@ -73,7 +74,7 @@
                     <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
                     <h4 class="font-weight-normal mb-3">Keuntungan <i class="mdi mdi-diamond mdi-24px float-end"></i>
                     </h4>
-                    <h2 class="mb-5"><?= "Rp. " . number_format(hitungPendapatanBersih() ?: 0); ?></h2>
+                    <h2 class="mb-5"><span id="profit-label">Rp. 0</span></h2>
                     <h6 class="card-text">Profit bersih</h6>
                   </div>
                 </div>
@@ -577,44 +578,25 @@
                     <div class="row">
                       <div class="col-md-3">
                         <div class="bg-light p-4 rounded text-center">
-                          <h3><?= countRowsBarang() ?></h3>
+                          <h3 id="total-produk">0</h3>
                           <p class="text-muted">Total Produk</p>
                         </div>
                       </div>
                       <div class="col-md-3">
                         <div class="bg-light p-4 rounded text-center">
-                          <h3><?= countTransactions() ?></h3>
+                          <h3 id="total-transaksi">0</h3>
                           <p class="text-muted">Total Transaksi</p>
                         </div>
                       </div>
                       <div class="col-md-3">
                         <div class="bg-light p-4 rounded text-center">
-                          <h3>
-                            <?php
-                              $totalStock = 0;
-                              $products = getDataBarang();
-                              foreach ($products as $product) {
-                                $totalStock += $product['stok'];
-                              }
-                              echo $totalStock;
-                            ?>
-                          </h3>
+                          <h3 id="total-stok">0</h3>
                           <p class="text-muted">Total Stok</p>
                         </div>
                       </div>
                       <div class="col-md-3">
                         <div class="bg-light p-4 rounded text-center">
-                          <h3>
-                            <?php
-                              $lowStockCount = 0;
-                              foreach ($products as $product) {
-                                if ($product['stok'] <= 5) {
-                                  $lowStockCount++;
-                                }
-                              }
-                              echo $lowStockCount;
-                            ?>
-                          </h3>
+                          <h3 id="stok-menipis">0</h3>
                           <p class="text-muted">Stok Menipis</p>
                         </div>
                       </div>
@@ -766,5 +748,45 @@
       });
     </script>
     <!-- End custom js for this page -->
+    <script type="module">
+      import api from '../assets/js/supabase-client.js';
+      (async ()=>{
+        const transaksi = await api.list('transaksi','id_transaksi,total_pembelian,tanggal,bayar,kembalian,id_pelanggan');
+        const barang = await api.list('barang','id_barang,stok,harga_beli,harga_jual,merk,nama_barang');
+        const pelanggan = await api.list('pelanggan','id_pelanggan');
+        // Omset
+        const omset = transaksi.reduce((s,t)=>s+Number(t.total_pembelian||0),0);
+        document.getElementById('omset-label').textContent = api.rupiah(omset);
+        // Profit (jual - beli over sold items approximation: aggregate from detail not fetched here - fallback omset)
+        document.getElementById('profit-label').textContent = api.rupiah(omset); 
+        // Pelanggan
+        document.getElementById('pelanggan-count').textContent = pelanggan.length;
+        // Inventory stats
+        document.getElementById('total-produk').textContent = barang.length;
+        document.getElementById('total-transaksi').textContent = transaksi.length;
+        const totalStok = barang.reduce((s,b)=>s+Number(b.stok||0),0);
+        document.getElementById('total-stok').textContent = totalStok;
+        const low = barang.filter(b=>Number(b.stok)<=5).length;
+        document.getElementById('stok-menipis').textContent = low;
+        // Monthly sales
+        const monthly = Array(12).fill(0);
+        transaksi.forEach(t=>{
+          const m = new Date(t.tanggal).getMonth();
+            monthly[m] += Number(t.total_pembelian||0);
+        });
+        // Replace polyline dynamically
+        const svg = document.querySelector('.card-body svg');
+        if(svg){
+          const max = Math.max(...monthly,1);
+          const pts = monthly.map((v,i)=>{
+            const x = (i/11)*1000;
+            const y = 250 - ((v/max)*200);
+            return `${x},${y}`;
+          }).join(' ');
+          const poly = svg.querySelector('polyline');
+          if(poly) poly.setAttribute('points', pts);
+        }
+      })().catch(e=>console.error('Dashboard load error', e));
+    </script>
   </body>
 </html>

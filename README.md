@@ -1,4 +1,4 @@
-# Kasir App – Supabase + GitHub Quick Start
+# Kasir App – Supabase (REST via JS) + GitHub
 
 Projek ini menggunakan PHP 8 + Supabase (Postgres via PDO). Dokumen ini membantu menyiapkan repo GitHub, environment Supabase, migrasi dari dump MySQL yang ada, serta cara menjalankan lokal.
 
@@ -27,46 +27,72 @@ git push -u origin main
 ```
 
 Catatan:
-- GitHub Pages tidak menjalankan PHP. Repo ini untuk source control. Untuk menjalankan aplikasinya, gunakan server PHP (local/hosting/VPS).
+- GitHub Pages tidak menjalankan PHP. Untuk publikasi web, gunakan platform yang mendukung PHP atau ubah ke serverless.
+- Integrasi umum: Supabase (database) + Vercel (hosting front-end + API). Vercel tidak native mendukung PHP tradisional, tetapi Anda bisa:
+  - Opsi A (Disarankan): Refactor endpoint ke JavaScript/TypeScript (Next.js API Routes) dan tetap gunakan Supabase.
+  - Opsi B (Eksperimental): Gunakan builder komunitas (vercel-php) atau bungkus via Docker (Vercel Edge limitations).
+- Alternatif hosting PHP full: Render, Railway, Hostinger, cPanel, Netlify (dengan adapter), dsb.
 
-2) Rekomendasi .gitignore (jangan commit rahasia)
-Tambahkan file .gitignore di root project Anda:
+## Deploy ke Vercel + Supabase (Mode Sederhana)
+Jika ingin cepat online sementara masih memakai PHP, pertimbangkan hosting lain. Tetapi jika tetap memakai Vercel untuk layer front-end (HTML/CSS/JS) dan backend dipisah:
 
-```gitignore
-# OS / editor
-.DS_Store
-Thumbs.db
-*.log
-.vscode/
-.idea/
+1. Struktur Repo
+   - Root repo (GitHub) berisi folder App/.
+   - Pastikan file index.html mengarah ke controller/Controller.php (sudah ada).
 
-# Env & secrets
-.env
-*.env
+2. Strategi Deploy
+   - Jadikan App sebagai Root Directory di Vercel (Project Settings → General → Root Directory = App).
+   - PHP file tidak akan dieksekusi sebagai server-side di Vercel (static delivery only).
+   - Untuk fungsi dinamis (login, transaksi) refactor ke:
+     - Next.js API Route (pages/api/*.ts) yang memanggil Supabase memakai supabase-js.
+     - Atau gunakan Edge Functions Supabase untuk logic yang sensitif.
 
-# Composer / vendor (jika nanti menambah library)
-vendor/
+3. Konversi Minimal (Jika Melanjutkan Refactor)
+   - Pindahkan logika autentikasi dari LoginAdmin (PHP) ke endpoint /api/login (JavaScript).
+   - Gunakan supabase.auth untuk manajemen user (opsional).
+   - Query seperti getDataBarang diganti supabase.from('barang').select('*').
 
-# Node (jika menambah tooling front-end)
-node_modules/
+4. Environment Variables di Vercel
+   Tambahkan di Project → Settings → Environment Variables:
+   - SUPABASE_DB_HOST
+   - SUPABASE_DB_PORT
+   - SUPABASE_DB_NAME
+   - SUPABASE_DB_USER
+   - SUPABASE_DB_PASSWORD
+   - SUPABASE_DB_SSLMODE (require)
+   Jika memakai supabase-js:
+   - NEXT_PUBLIC_SUPABASE_URL
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY (jangan public)
+
+5. Optional vercel.json (jika mulai refactor ke Next.js)
+```json
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next_public_supabase_anon_key"
+  }
+}
 ```
 
-3) Environment Variables (dibaca oleh Database.php)
-Aplikasi membaca variabel dari environment:
-- SUPABASE_DB_HOST=xxxx.supabase.co
-- SUPABASE_DB_PORT=5432
-- SUPABASE_DB_NAME=postgres
-- SUPABASE_DB_USER=postgres
-- SUPABASE_DB_PASSWORD=your-db-password
-- SUPABASE_DB_SSLMODE=require
+6. Saran Migrasi Bertahap
+   - Tahap 1: Push repo ke GitHub (sudah).
+   - Tahap 2: Deploy static ke Vercel (hanya UI).
+   - Tahap 3: Porting fungsi penting (login, fetch barang, transaksi) ke API serverless.
+   - Tahap 4: Matikan PHP dan hapus folder controller/ setelah semua endpoint berpindah.
 
-Cara set di lokal:
-- PowerShell (Windows):
-  $env:SUPABASE_DB_HOST="xxxx.supabase.co"
-  (set variabel lain serupa, lalu jalankan server PHP di session yang sama)
-- Web server (Apache/Nginx/PHP-FPM): set via konfigurasi server/hosting (disarankan untuk production).
+7. Alternatif Hosting Langsung PHP
+   Jika tidak ingin refactor:
+   - Render.com: Deploy sebagai Web Service (Dockerfile optional).
+   - Railway.app: Import repo, tambah environment variables.
+   - Hostinger/cPanel: Upload folder App dan arahkan DocumentRoot.
+   - Local (LAN): Gunakan ngrok untuk expose sementara.
 
-4) Setup Supabase (Postgres) – Skema Baru
+## Setup Supabase (Postgres) – Skema Baru
 - Buat project di https://supabase.com
 - Ambil kredensial DB dari Settings → Database.
 - Jalankan SQL skema berikut di SQL Editor Supabase:
@@ -130,7 +156,7 @@ insert into role (nama_role) values ('Owner'), ('Admin'), ('Kasir')
 on conflict do nothing;
 ```
 
-5) (Opsional) Seeding Minimal
+## (Opsional) Seeding Minimal
 Untuk login awal, buat user seperti di dump lama (password md5('admin') = 21232f297a57a5a743894a0e4a801fc3):
 
 ```sql
@@ -141,7 +167,7 @@ insert into admin (username, password, nama_admin, id_role) values
 on conflict do nothing;
 ```
 
-6) Migrasi Data dari Dump MySQL (database/aplikasi_kasir.sql)
+## Migrasi Data dari Dump MySQL (database/aplikasi_kasir.sql)
 Anda punya dua opsi alat:
 
 - Opsi 1: DBeaver (GUI – mudah)
@@ -168,20 +194,66 @@ Catatan migrasi:
 - Pastikan FK detail_transaksi.id_transaksi punya ON DELETE CASCADE (sudah ada di skema).
 - Setelah migrasi, verifikasi jumlah baris per tabel dan coba login.
 
-7) Jalankan Secara Lokal
+## Jalankan Secara Lokal
 - Pastikan environment variables sudah diset di terminal yang sama.
 - Dari folder App:
   php -S localhost:8000
 - Buka http://localhost:8000/index.html (akan redirect ke controller/Controller.php).
 
-8) Keamanan
+## Keamanan
 - Jangan commit kredensial Supabase. Simpan sebagai Environment Variables / GitHub Secrets (jika dipakai CI).
 - Password admin masih MD5 (kompatibilitas lama). Disarankan migrasi ke password_hash() ke depan.
 
-9) Export
+## Export
 - Export Excel tidak butuh Composer. PDF export bisa memakai mPDF via Composer (opsional).
 
-Troubleshooting cepat
-- Error koneksi DB: cek ENV sudah diset dan nilai host/port/ssl benar.
-- Migrasi gagal: cek mapping tipe data (datetime→timestamp, decimal→numeric).
-- Blank page/error PHP: pakai PHP 8+ dan cek error log di server/terminal.
+## Troubleshooting cepat
+Tambahan khusus Vercel / serverless:
+- PHP tidak berjalan → Vercel hanya melayani static (perlu refactor ke JS atau pindah host).
+- 404 controller/Controller.php → Pastikan bukan Next.js project; kalau Next.js gunakan routing pages/.
+- CORS error saat fetch Supabase → Pastikan URL & anon key benar dan policy RLS sesuai.
+
+Jika memilih refactor penuh ke Next.js + supabase-js, buat checklist baru sebelum menghapus PHP:
+- Endpoint login berjalan
+- CRUD barang & pelanggan ported
+- Transaksi insert + detail berfungsi
+- Cetak nota diganti template client-side (React + print)
+
+## Perubahan Terbaru (Migrasi ke Supabase JS)
+- Koneksi PHP (controller/Database.php) dinonaktifkan.
+- Gunakan file: assets/js/supabase-client.js untuk akses data melalui REST API Supabase.
+- Query lama PHP masih berjalan lokal jika Anda aktifkan kembali koneksi, tetapi akan dihapus setelah refactor penuh.
+
+# Kasir App – Hybrid Supabase (PHP + JS)
+
+## Mode Hybrid
+- Backend PHP tetap aktif (login, transaksi) memakai PDO ke Supabase.
+- Listing data (barang, pelanggan, admin, transaksi, dashboard) dipindah ke front-end dengan assets/js/supabase-client.js.
+- Jika ingin full JS, ganti form submit transaksi & login ke Supabase auth lalu hapus Controller.php.
+
+## Penyesuaian Terbaru
+- Mengembalikan koneksi PDO di controller/Database.php agar fungsi lama tidak error.
+- Menambah guard null pada Function.php.
+- View utama kini menggunakan fetch JS untuk data tabel.
+
+## Supabase JS Client (REST)
+Contoh berada di: assets/js/supabase-client.js
+
+Memanggil data:
+```html
+<script type="module">
+  import supabase from '../assets/js/supabase-client.js';
+  (async () => {
+     const barang = await supabase.fetch('barang?select=*');
+     console.log('Data barang:', barang);
+  })();
+</script>
+```
+
+Pastikan table exposed (Row Level Security diatur) atau gunakan service role di server (jangan expose service key ke front-end public).
+
+## Langkah Migrasi Query
+1. Identifikasi fungsi PHP di Function.php (getDataBarang, getDataPelanggan, dll).
+2. Buat pengganti di JS memakai supabase.fetch('nama_tabel?select=*').
+3. Ganti loop PHP di view menjadi render JS (innerHTML).
+4. Setelah semua selesai, hapus Function.php dan Controller.php.

@@ -15,6 +15,7 @@ require_once __DIR__ . "/Database.php";
 // Fungsi Login Admin (PDO)
 function LoginAdmin($username, $password) {
     $pdo = db();
+    if(!$pdo){ echo "<script>alert('DB tidak tersedia');window.location='Controller.php?u=login';</script>"; return; }
 
     $stmt = $pdo->prepare("SELECT a.*, r.nama_role 
                            FROM admin a 
@@ -182,7 +183,7 @@ function hapusAdmin($id_admin) {
 }
 
 function getDataAdmin() {
-    $pdo = db();
+    $pdo = db(); if(!$pdo) return [];
     $stmt = $pdo->query("SELECT a.*, r.nama_role FROM admin a JOIN role r ON a.id_role = r.id_role ORDER BY a.id_admin");
     return $stmt->fetchAll();
 }
@@ -199,7 +200,7 @@ function tambahBarang($nama_barang, $merk, $harga_beli, $harga_jual, $stok){
 }
 
 function getDataBarang(){
-    $pdo = db();
+    $pdo = db(); if(!$pdo) return [];
     $stmt = $pdo->query("SELECT * FROM barang");
     return $stmt->fetchAll();
 }
@@ -237,7 +238,7 @@ function tambahPelanggan($nama_pelanggan, $no_hp, $alamat, $email){
 }
 
 function getDataPelanggan(){
-    $pdo = db();
+    $pdo = db(); if(!$pdo) return [];
     $stmt = $pdo->query("SELECT * FROM pelanggan");
     return $stmt->fetchAll();
 }
@@ -267,7 +268,7 @@ function countRowsPelanggan(){
 // Transaksi (PDO)
 // =========================
 function getDataTransaksi(){
-    $pdo = db();
+    $pdo = db(); if(!$pdo) return [];
     $stmt = $pdo->query("SELECT * FROM transaksi");
     return $stmt->fetchAll();
 }

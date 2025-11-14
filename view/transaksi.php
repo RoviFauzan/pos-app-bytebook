@@ -91,6 +91,7 @@
         transition: width 0.5s ease;
       }
     </style>
+    <script type="module" src="../assets/js/supabase-client.js"></script>
   </head>
   <body>
     <!-- Progress overlay - initially hidden -->
@@ -229,21 +230,7 @@
                     <div class="mb-3">
                         <label class="form-label">Pilih Barang</label>
                         <select class="form-select" id="select-barang">
-                            <option value="" selected disabled>-- Pilih Barang --</option>
-                            <?php 
-                            $barang = getDataBarang();
-                            foreach ($barang as $key) {
-                                $disabled = ($key['stok'] <= 0) ? 'disabled' : '';
-                                $stockInfo = ($key['stok'] <= 0) ? ' - Stok Habis' : ' - Stok: ' . $key['stok'];
-                            ?>
-                            <option value="<?= $key['id_barang']; ?>" 
-                                    data-nama="<?= htmlspecialchars($key['nama_barang']); ?>"
-                                    data-harga="<?= $key['harga_jual']; ?>" 
-                                    data-stok="<?= $key['stok']; ?>"
-                                    <?= $disabled ?>>
-                                <?= $key['nama_barang']; ?><?= $stockInfo; ?>
-                            </option>
-                            <?php } ?>
+                          <option value="" disabled selected>-- Memuat Barang --</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -613,7 +600,23 @@
             document.getElementById('errorText').textContent = 'Koneksi internet terputus. Silakan periksa koneksi Anda.';
         }
     });
-    </script>
 
+    </script>
+    <script type="module">
+      import api from '../assets/js/supabase-client.js';
+      (async ()=>{
+        const sel = document.getElementById('select-barang');
+        const data = await api.list('barang');
+        sel.innerHTML = '<option value="" disabled selected>-- Pilih Barang --</option>' +
+          data.map(b=>{
+            const disabled = b.stok<=0?'disabled':'';
+            const info = b.stok<=0?' - Stok Habis':' - Stok: '+b.stok;
+            return `<option value="${b.id_barang}" data-nama="${b.nama_barang}" data-harga="${b.harga_jual}" data-stok="${b.stok}" ${disabled}>${b.nama_barang}${info}</option>`;
+          }).join('');
+      })().catch(e=>{
+        const sel = document.getElementById('select-barang');
+        sel.innerHTML = `<option value="" disabled>Error: ${e.message}</option>`;
+      });
+    </script>
   </body>
 </html>
