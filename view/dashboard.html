@@ -1,66 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Dashboard Kasir (Static)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <script type="module" src="../assets/js/supabase-client.js"></script>
-  <script type="module">
-    import supabase from '../assets/js/supabase-client.js';
-    const session = JSON.parse(localStorage.getItem('kasir_session') || 'null');
-    if(!session){ window.location.href='login.html'; }
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Kasir App</title>    
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="../assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
+    <link rel="stylesheet" href="../assets/vendors/font-awesome/css/font-awesome.min.css">
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.png" />
+    <style>
+      .topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#fff; border-bottom:1px solid #eee; }
+      .brand { display:flex; align-items:center; gap:10px; }
+      .brand img { width:36px; height:36px; border-radius:8px; }
+      .brand span { font-weight:700; color:#4B49AC; }
+    </style>
+  </head>
+  <body>
+    <div class="container-scroller">
+      <!-- Simple header (pengganti include header.php di mode static) -->
+      <div class="topbar">
+        <div class="brand">
+          <img src="../assets/images/logo.png" alt="logo">
+          <span>BYTEBOOK</span>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-outline-danger" id="btn-logout">
+            <i class="mdi mdi-logout"></i> Logout
+          </button>
+        </div>
+      </div>
 
-    async function loadCounts(){
-      try {
-        const barang = await supabase.fetchRest('barang?select=id_barang');
-        const pelanggan = await supabase.fetchRest('pelanggan?select=id_pelanggan');
-        const transaksi = await supabase.fetchRest('transaksi?select=total_pembelian');
-        const totalPenjualan = transaksi.reduce((a,c)=> a + Number(c.total_pembelian||0),0);
-        document.getElementById('count-barang').textContent = barang.length;
-        document.getElementById('count-pelanggan').textContent = pelanggan.length;
-        document.getElementById('count-transaksi').textContent = transaksi.length;
-        document.getElementById('total-penjualan').textContent = 'Rp ' + totalPenjualan.toLocaleString('id-ID');
-      } catch (e) {
-        console.error(e);
-        document.getElementById('status').textContent = 'Gagal memuat data';
+      <div class="container-fluid page-body-wrapper">
+        <div class="main-panel">
+          <div class="content-wrapper">
+            <div class="page-header">
+              <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white me-2">
+                  <i class="mdi mdi-home"></i>
+                </span> Dashboard
+              </h3>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Total Penjualan <i class="mdi mdi-chart-line mdi-24px float-end"></i></h4>
+                    <h2 class="mb-5" id="omset">Rp 0</h2>
+                    <h6 class="card-text">Omset keseluruhan</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-info card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Pelanggan <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i></h4>
+                    <h2 class="mb-5" id="cnt-pelanggan">0</h2>
+                    <h6 class="card-text">Jumlah pelanggan terdaftar</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-success card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="../assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Keuntungan <i class="mdi mdi-diamond mdi-24px float-end"></i></h4>
+                    <h2 class="mb-5" id="profit">Rp 0</h2>
+                    <h6 class="card-text">Profit bersih (aproksimasi)</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transaksi terbaru (ringkas) -->
+            <div class="row">
+              <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <h4 class="card-title mb-0">Transaksi Terbaru</h4>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Tanggal</th>
+                            <th>Pelanggan</th>
+                            <th class="text-end">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody id="recent-transactions">
+                          <tr><td colspan="4" class="text-center text-muted">Memuat...</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size:.8rem;">Mode static (Vercel). Beberapa fitur lanjutan memerlukan backend PHP/API.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <!-- content-wrapper ends -->
+          <footer class="footer">
+            <div class="d-sm-flex justify-content-center justify-content-sm-between">
+              <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">© BYTEBOOK</span>
+            </div>
+          </footer>
+        </div>
+        <!-- main-panel ends -->
+      </div>
+      <!-- page-body-wrapper ends -->
+    </div>
+
+    <!-- plugins:js -->
+    <script src="../assets/vendors/js/vendor.bundle.base.js"></script>
+    <script type="module" src="../assets/js/supabase-client.js"></script>
+    <script type="module">
+      import supabase from '../assets/js/supabase-client.js';
+
+      // Auth guard (localStorage session)
+      const session = JSON.parse(localStorage.getItem('kasir_session') || 'null');
+      if (!session) {
+        window.location.href = 'login.html';
       }
-    }
-    window.addEventListener('DOMContentLoaded', loadCounts);
-    window.logout = function(){ localStorage.removeItem('kasir_session'); window.location.href='login.html'; }
-  </script>
-  <style>
-    .card { border-radius:12px; }
-    .grid { display:grid; gap:20px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
-  </style>
-</head>
-<body class="p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0">Dashboard (Static)</h3>
-    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
-  </div>
-  <div id="status" class="text-muted mb-3" style="font-size:.8rem;">Memuat...</div>
-  <div class="grid">
-    <div class="card p-3">
-      <h6 class="text-muted">Total Barang</h6>
-      <h3 id="count-barang">0</h3>
-    </div>
-    <div class="card p-3">
-      <h6 class="text-muted">Total Pelanggan</h6>
-      <h3 id="count-pelanggan">0</h3>
-    </div>
-    <div class="card p-3">
-      <h6 class="text-muted">Total Transaksi</h6>
-      <h3 id="count-transaksi">0</h3>
-    </div>
-    <div class="card p-3">
-      <h6 class="text-muted">Omset (Sederhana)</h6>
-      <h3 id="total-penjualan">Rp 0</h3>
-    </div>
-  </div>
-  <div class="mt-4 alert alert-info" style="font-size:.75rem;">
-    Ini versi static untuk Vercel. Fitur penuh memerlukan backend PHP / API route.
-  </div>
-</body>
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        localStorage.removeItem('kasir_session');
+        window.location.href = 'login.html';
+      });
+
+      const rp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+
+      async function loadCards() {
+        try {
+          // Omset: sum total_pembelian
+          const trx = await supabase.fetchRest('transaksi?select=total_pembelian,tanggal,id_pelanggan&order=tanggal.desc');
+          const omset = trx.reduce((a, c) => a + Number(c.total_pembelian || 0), 0);
+          document.getElementById('omset').textContent = rp(omset);
+
+          // Count pelanggan
+          const pel = await supabase.fetchRest('pelanggan?select=id_pelanggan');
+          document.getElementById('cnt-pelanggan').textContent = pel.length;
+
+          // Approx profit: sum(qty*harga_jual) - sum(qty*harga_beli)
+          // Fetch details + barang (2 requests then join in client)
+          const details = await supabase.fetchRest('detail_transaksi?select=id_barang,qty');
+          const barang = await supabase.fetchRest('barang?select=id_barang,harga_beli,harga_jual');
+          const priceMap = new Map(barang.map(b => [String(b.id_barang), { hb: Number(b.harga_beli||0), hj: Number(b.harga_jual||0) }]));
+          let jual = 0, beli = 0;
+          for (const d of details) {
+            const p = priceMap.get(String(d.id_barang));
+            if (p) {
+              jual += (Number(d.qty||0) * p.hj);
+              beli += (Number(d.qty||0) * p.hb);
+            }
+          }
+          document.getElementById('profit').textContent = rp(jual - beli);
+        } catch (e) {
+          console.warn('loadCards error', e);
+        }
+      }
+
+      async function loadRecentTransactions() {
+        try {
+          // Join-like: fetch transaksi and map pelanggan name separately
+          const trx = await supabase.fetchRest('transaksi?select=id_transaksi,tanggal,total_pembelian,id_pelanggan&order=tanggal.desc&limit=5');
+          const pelangganIds = [...new Set(trx.map(t => t.id_pelanggan))];
+          let pelMap = new Map();
+          if (pelangganIds.length) {
+            const query = 'pelanggan?select=id_pelanggan,nama_pelanggan&' + pelangganIds.map(id => `id_pelanggan=in.(${id})`)[0];
+            const pel = await supabase.fetchRest(`pelanggan?select=id_pelanggan,nama_pelanggan&id_pelanggan=in.(${pelangganIds.join(',')})`);
+            pelMap = new Map(pel.map(p => [p.id_pelanggan, p.nama_pelanggan]));
+          }
+
+          const tbody = document.getElementById('recent-transactions');
+          tbody.innerHTML = '';
+          if (!trx.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada transaksi</td></tr>';
+            return;
+          }
+          trx.forEach(t => {
+            const tr = document.createElement('tr');
+            const nama = pelMap.get(t.id_pelanggan) || '-';
+            const tgl = new Date(t.tanggal).toLocaleString('id-ID');
+            tr.innerHTML = `
+              <td>${t.id_transaksi}</td>
+              <td>${tgl}</td>
+              <td>${nama}</td>
+              <td class="text-end">${rp(t.total_pembelian)}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (e) {
+          console.warn('loadRecentTransactions error', e);
+        }
+      }
+
+      (async function init() {
+        await Promise.all([loadCards(), loadRecentTransactions()]);
+      })();
+    </script>
+  </body>
 </html>
