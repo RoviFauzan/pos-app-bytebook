@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Kasir App - Data Barang</title>
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="../assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="../assets/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
+    <link rel="stylesheet" href="../assets/vendors/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/vendors/simple-datatables/demo.css">
+    <link rel="stylesheet" href="../assets/vendors/simple-datatables/style.css">
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="shortcut icon" href="../assets/images/favicon.png" />
+    <style>
+      .topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:#fff; border-bottom:1px solid #eee; }
+      .brand { display:flex; align-items:center; gap:10px; }
+      .brand img { width:36px; height:36px; border-radius:8px; }
+      .brand span { font-weight:700; color:#4B49AC; }
+
+      /* Stock badges (match PHP version) */
+      .stock-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 0.4rem 0.65rem; font-size: 0.75rem; font-weight: 600; line-height: 1;
+        border-radius: 0.25rem; min-width: 60px; text-align: center;
+      }
+      .stock-normal {
+        background-color: rgba(105, 205, 145, 0.2);
+        color: #28a745;
+        border: 1px solid rgba(105, 205, 145, 0.3);
+      }
+      .stock-low {
+        background-color: rgba(255, 204, 112, 0.2);
+        color: #fd7e14;
+        border: 1px solid rgba(255, 204, 112, 0.3);
+      }
+      .stock-out {
+        background-color: rgba(250, 92, 124, 0.2);
+        color: #dc3545;
+        border: 1px solid rgba(250, 92, 124, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-scroller">
+      <!-- Simple header (static mode) -->
+      <div class="topbar">
+        <div class="brand">
+          <img src="../assets/images/logo.png" alt="logo">
+          <span>BYTEBOOK</span>
+        </div>
+        <div>
+          <a href="dashboard.html" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="mdi mdi-view-dashboard"></i> Dashboard
+          </a>
+          <button class="btn btn-sm btn-outline-danger" id="btn-logout">
+            <i class="mdi mdi-logout"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <div class="container-fluid page-body-wrapper">
+        <div class="main-panel">
+          <div class="content-wrapper">
+            <div class="page-header">
+              <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white me-2">
+                  <i class="mdi mdi-laptop"></i>
+                </span> Data Barang
+              </h3>
+            </div>
+
+            <div class="row card rounded-5">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h4 class="card-title">Data Barang</h4>
+                  <div class="text-muted" id="role-hint" style="font-size:.85rem;"></div>
+                </div>
+                <p class="card-description">
+                  Berikut adalah data barang. Mode static (Vercel) hanya menampilkan data.
+                </p>
+                <div class="table-responsive">
+                  <table id="demo-table">
+                    <thead>
+                      <tr>
+                        <th><b>#ID Barang</b></th>
+                        <th>Nama Barang</th>
+                        <th>Merk</th>
+                        <th>Harga Beli</th>
+                        <th>Harga Jual</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tbody-barang">
+                      <tr><td colspan="7" class="text-center text-muted">Memuat data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+              </div>
+            </div>
+
+          </div>
+          <footer class="footer">
+            <div class="d-sm-flex justify-content-center justify-content-sm-between">
+              <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">© BYTEBOOK</span>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <!-- plugins:js -->
+    <script src="../assets/vendors/js/vendor.bundle.base.js"></script>
+    <script type="module" src="../assets/js/supabase-client.js"></script>
+    <script type="module">
+      import supabase from '../assets/js/supabase-client.js';
+      import { DataTable } from "../assets/vendors/simple-datatables/module.js";
+
+      // Auth guard
+      const session = JSON.parse(localStorage.getItem('kasir_session') || 'null');
+      if (!session) {
+        window.location.href = '../index.html';
+      }
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        localStorage.removeItem('kasir_session');
+        window.location.href = '../index.html';
+      });
+
+      const isOwner = session?.id_role === 1;
+      const isAdmin = session?.id_role === 2;
+      const isKasir = session?.id_role === 3;
+
+      const roleHint = document.getElementById('role-hint');
+      if (isAdmin) {
+        roleHint.textContent = 'Peran: Admin. Edit/hapus hanya tersedia di server PHP.';
+      } else if (isOwner) {
+        roleHint.textContent = 'Peran: Owner. Aksi dibatasi di mode static.';
+      } else if (isKasir) {
+        roleHint.textContent = 'Peran: Kasir. Hanya tampilan data.';
+      }
+
+      const rp = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+      const stockBadge = (stok) => {
+        if (stok <= 0) return `<div class="stock-badge stock-out">0</div>`;
+        if (stok <= 5) return `<div class="stock-badge stock-low">${stok}</div>`;
+        return `<div class="stock-badge stock-normal">${stok}</div>`;
+      };
+
+      async function loadBarang() {
+        try {
+          const rows = await supabase.fetchRest('barang?select=id_barang,nama_barang,merk,harga_beli,harga_jual,stok&order=id_barang.asc');
+          const tbody = document.getElementById('tbody-barang');
+          tbody.innerHTML = '';
+
+          if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Tidak ada data</td></tr>`;
+          } else {
+            rows.forEach(b => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${b.id_barang}</td>
+                <td>${b.nama_barang}</td>
+                <td>${b.merk || '-'}</td>
+                <td>${rp(b.harga_beli)}</td>
+                <td>${rp(b.harga_jual)}</td>
+                <td>${stockBadge(Number(b.stok || 0))}</td>
+                <td>
+                  <span class="badge bg-secondary">Aksi via PHP</span>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+
+          // Init DataTable
+          new DataTable("#demo-table", {
+            perPageSelect: [5, 10, 15, ["All", -1]],
+            columns: [
+              { select: 4, sortSequence: ["desc", "asc"] }
+            ]
+          });
+        } catch (e) {
+          console.warn('Gagal memuat barang:', e);
+          const tbody = document.getElementById('tbody-barang');
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Gagal memuat data</td></tr>`;
+        }
+      }
+
+      loadBarang();
+    </script>
+  </body>
+</html>
