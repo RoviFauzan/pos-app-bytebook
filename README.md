@@ -256,3 +256,23 @@ Gunakan JS client untuk eksperimen tanpa mematikan fungsi PHP existing.
 Jika sebelumnya muncul error merah pada IDE:
 - Penyebab: Database.php mengembalikan null sehingga db()->query() gagal.
 - Solusi: Database.php kini memuat koneksi PDO lagi + guard ensureDb() di Function.php.
+
+## Mode Static (Vercel)
+Vercel tidak mengeksekusi PHP, sehingga file .php akan diunduh. Gunakan file:
+- /index.html -> redirect ke /App/view/login.html
+- /App/view/login.html -> autentikasi via Supabase REST (md5)
+- /App/view/dashboard.html -> menampilkan ringkas data
+
+Langkah adaptasi:
+1. Deploy ke Vercel setelah menambahkan file HTML.
+2. Jangan arahkan ke Controller.php pada environment Vercel.
+3. Simpan session di localStorage (key: kasir_session).
+4. Logout: hapus localStorage lalu redirect ke login.html.
+
+Keamanan:
+- Anon key Supabase hanya untuk read/query dasar.
+- Operasi tulis sensitif (transaksi) sebaiknya dipindah ke API serverless (Next.js) atau tetap dijalankan di hosting PHP lain.
+
+Migrasi penuh:
+- Port fungsi tambah transaksi ke Next.js API (POST /api/transaksi).
+- Gunakan Row Level Security + Policies di Supabase untuk membatasi akses.

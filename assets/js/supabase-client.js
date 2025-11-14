@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/+esm';
 
 // Replace with your actual project URL & anon key (anon key is safe for public use)
 const supabaseUrl = 'https://ecmfayciiwjrxcogeqlr.supabase.co';

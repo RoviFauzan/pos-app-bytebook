@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login Kasir (Static)</title>
+  <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
+  <script type="module" src="../../assets/js/supabase-client.js"></script>
+  <script type="module" src="../../assets/js/auth.js"></script>
+  <style>
+    body { background:#f5f7fb; }
+    .auth-box { max-width:420px;margin:60px auto;padding:35px;background:#fff;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.08); }
+    .brand { display:flex;align-items:center;gap:12px;margin-bottom:25px; }
+    .brand h2 { margin:0;font-weight:700;letter-spacing:.5px;color:#4B49AC; }
+    .btn-primary { background:#4B49AC;border:none; }
+    .error-msg { display:none;margin-top:15px;font-size:.875rem; }
+  </style>
+</head>
+<body>
+  <div class="auth-box">
+    <div class="brand">
+      <img src="../assets/images/logo.png" alt="logo" width="52" height="52" style="border-radius:10px;">
+      <h2>BYTEBOOK</h2>
+    </div>
+    <h4 class="mb-3">Silahkan login</h4>
+    <form id="login-form" autocomplete="off">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input name="username" type="text" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input name="password" type="password" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+      <div class="error-msg alert alert-danger" id="login-error">Username atau password salah.</div>
+    </form>
+    <div class="mt-4 text-muted" style="font-size:.75rem;">
+      Mode static (tanpa PHP). Gunakan hosting PHP untuk fitur penuh.
+    </div>
+  </div>
+</body>
+</html>

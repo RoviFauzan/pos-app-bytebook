@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard Kasir (Static)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script type="module" src="../../assets/js/supabase-client.js"></script>
+  <script type="module">
+    import supabase from '../../assets/js/supabase-client.js';
+    const session = JSON.parse(localStorage.getItem('kasir_session') || 'null');
+    if(!session){ window.location.href='login.html'; }
+
+    async function loadCounts(){
+      try {
+        const barang = await supabase.fetchRest('barang?select=id_barang');
+        const pelanggan = await supabase.fetchRest('pelanggan?select=id_pelanggan');
+        const transaksi = await supabase.fetchRest('transaksi?select=total_pembelian');
+        const totalPenjualan = transaksi.reduce((a,c)=> a + Number(c.total_pembelian||0),0);
+        document.getElementById('count-barang').textContent = barang.length;
+        document.getElementById('count-pelanggan').textContent = pelanggan.length;
+        document.getElementById('count-transaksi').textContent = transaksi.length;
+        document.getElementById('total-penjualan').textContent = 'Rp ' + totalPenjualan.toLocaleString('id-ID');
+      } catch (e) {
+        console.error(e);
+        document.getElementById('status').textContent = 'Gagal memuat data';
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadCounts);
+    window.logout = function(){ localStorage.removeItem('kasir_session'); window.location.href='login.html'; }
+  </script>
+  <style>
+    .card { border-radius:12px; }
+    .grid { display:grid; gap:20px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+  </style>
+</head>
+<body class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Dashboard (Static)</h3>
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+  </div>
+  <div id="status" class="text-muted mb-3" style="font-size:.8rem;">Memuat...</div>
+  <div class="grid">
+    <div class="card p-3">
+      <h6 class="text-muted">Total Barang</h6>
+      <h3 id="count-barang">0</h3>
+    </div>
+    <div class="card p-3">
+      <h6 class="text-muted">Total Pelanggan</h6>
+      <h3 id="count-pelanggan">0</h3>
+    </div>
+    <div class="card p-3">
+      <h6 class="text-muted">Total Transaksi</h6>
+      <h3 id="count-transaksi">0</h3>
+    </div>
+    <div class="card p-3">
+      <h6 class="text-muted">Omset (Perhitungan Sederhana)</h6>
+      <h3 id="total-penjualan">Rp 0</h3>
+    </div>
+  </div>
+  <div class="mt-4 alert alert-info" style="font-size:.75rem;">
+    Ini versi static untuk Vercel. Fitur penuh (transaksi detail, cetak nota, pembaruan stok) memerlukan backend PHP / API route.
+  </div>
+</body>
+</html>
