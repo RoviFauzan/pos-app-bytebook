@@ -5,14 +5,14 @@ const errorBox = document.getElementById('login-error');
 
 async function login(username, password) {
   try {
-    // Fetch user row via REST filter
-    const rows = await supabase.fetchRest(`admin?username=eq.${encodeURIComponent(username)}&select=id_admin,username,password,nama_admin,id_role`);
+    const rows = await supabase.fetchRest(
+      `admin?username=eq.${encodeURIComponent(username)}&select=id_admin,username,password,nama_admin,id_role`
+    );
     if (!rows.length) return false;
     const admin = rows[0];
     const hashed = md5(password);
     if (hashed !== admin.password) return false;
 
-    // Store session (no sensitive data)
     localStorage.setItem('kasir_session', JSON.stringify({
       id_admin: admin.id_admin,
       username: admin.username,
@@ -41,8 +41,8 @@ if (form) {
   });
 }
 
-// Auto-redirect jika sudah login
-if (window.location.pathname.endsWith('login.html')) {
+// Auto-redirect if already logged in
+if (window.location.pathname.endsWith('/view/login.html') || window.location.pathname.endsWith('login.html')) {
   const sess = localStorage.getItem('kasir_session');
   if (sess) window.location.href = 'dashboard.html';
 }

@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <script type="module" src="../../assets/js/supabase-client.js"></script>
+  <script type="module" src="../assets/js/supabase-client.js"></script>
   <script type="module">
-    import supabase from '../../assets/js/supabase-client.js';
+    import supabase from '../assets/js/supabase-client.js';
     const session = JSON.parse(localStorage.getItem('kasir_session') || 'null');
     if(!session){ window.location.href='login.html'; }
 
@@ -55,12 +55,12 @@
       <h3 id="count-transaksi">0</h3>
     </div>
     <div class="card p-3">
-      <h6 class="text-muted">Omset (Perhitungan Sederhana)</h6>
+      <h6 class="text-muted">Omset (Sederhana)</h6>
       <h3 id="total-penjualan">Rp 0</h3>
     </div>
   </div>
   <div class="mt-4 alert alert-info" style="font-size:.75rem;">
-    Ini versi static untuk Vercel. Fitur penuh (transaksi detail, cetak nota, pembaruan stok) memerlukan backend PHP / API route.
+    Ini versi static untuk Vercel. Fitur penuh memerlukan backend PHP / API route.
   </div>
 </body>
 </html>
