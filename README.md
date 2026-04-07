@@ -1,45 +1,52 @@
-Bytebook
-Projek aplikasi kasir ini merupakan sistem point-of-sale (POS) berbasis web. Aplikasi ini dibangun untuk mengelola transaksi penjualan, data barang, dan pengguna dengan mengombinasikan logika PHP konvensional di sisi server dan interaksi antarmuka menggunakan JavaScript.
+# 🛒 Bytebook - Point of Sale (POS) Web App
 
-🛠️ Teknologi yang Digunakan
-Backend: PHP 8 (menggunakan PDO untuk koneksi database).
+![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
 
-Database: MySQL / MariaDB.
+Bytebook adalah sistem *Point-of-Sale* (POS) berbasis web yang dirancang khusus untuk mengelola transaksi penjualan, manajemen inventaris barang, dan data pengguna toko secara efisien dengan menggunakan logika PHP.
 
-Frontend: HTML, CSS, dan Vanilla JavaScript ES6.
+---
 
-🗄️ Struktur Database
-Skema basis data proyek ini berfokus pada manajemen toko dasar, yang meliputi tabel-tabel berikut:
+## 🛠️ Teknologi yang Digunakan
 
-role: Mengatur hak akses pengguna (Owner, Admin, Kasir).
+- **Backend:** PHP 8 (menggunakan PDO untuk koneksi database yang lebih aman)
+- **Database:** MySQL / MariaDB
+- **Frontend:** HTML5, CSS3, dan Vanilla JavaScript ES6
 
-admin: Menyimpan data akun pengguna aplikasi.
+---
 
-pelanggan: Menyimpan data profil pelanggan toko.
+## 🗄️ Struktur Database
 
-barang: Menyimpan data inventaris, harga beli/jual, dan stok.
+Skema basis data proyek ini berfokus pada manajemen toko dasar. Berikut adalah tabel-tabel utama yang digunakan:
 
-transaksi & detail_transaksi: Mencatat histori penjualan toko (total, pembayaran, kembalian, dan jumlah barang yang dibeli).
+| Nama Tabel | Deskripsi |
+| --- | --- |
+| `role` | Mengatur hak akses pengguna (Owner, Admin, Kasir). |
+| `admin` | Menyimpan data akun pengguna aplikasi. |
+| `pelanggan` | Menyimpan data profil pelanggan toko. |
+| `barang` | Menyimpan data inventaris, harga beli/jual, dan stok barang. |
+| `transaksi` & `detail_transaksi` | Mencatat histori penjualan toko (total tagihan, jumlah pembayaran, kembalian, dan jumlah barang yang dibeli). |
 
-🔐 Akun Login
-Untuk masuk ke dalam aplikasi, Anda dapat menggunakan akun default berikut yang sudah dibagi berdasarkan hak aksesnya (Class):
+---
 
-Class Owner
+## 🔐 Akun Login (Default)
 
-Username: owner
+Untuk masuk ke dalam aplikasi dan menguji coba fitur, Anda dapat menggunakan salah satu akun default di bawah ini sesuai dengan hak akses *(Role)* masing-masing:
 
-Password: admin
+| Hak Akses (Role) | Username | Password |
+| :---: | :---: | :---: |
+| 👑 **Owner** | `owner` | `admin` |
+| 🛡️ **Admin** | `admin` | `admin` |
+| 🧑‍💻 **Kasir** | `kasir` | `admin` |
 
-Class Admin
+> ⚠️ **Catatan Keamanan:** 
+> Password di atas secara default masih dienkripsi menggunakan **MD5** demi menjaga kompatibilitas dengan sistem lama. Jika aplikasi ini ingin dikembangkan lebih lanjut untuk tahap produksi (Production), sangat disarankan untuk mengubah metode enkripsi ke algoritma yang lebih modern dan aman seperti **Bcrypt** atau **Argon2**.
 
-Username: admin
+---
 
-Password: admin
-
-Class Kasir
-
-Username: kasir
-
-Password: admin
-
-Catatan Keamanan: Password di atas secara default masih di-enkripsi menggunakan MD5 demi menjaga kompatibilitas dengan sistem lama. Jika ingin dikembangkan lebih lanjut untuk tahap produksi, sangat disarankan untuk memperbarui sistem keamanan menggunakan password_hash() bawaan PHP.
+<p align="center">
+  Dibuat dengan ❤️ oleh RoviFauzan
+</p>
